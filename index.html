@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Kanban</title>
+    <style>
+        :root { 
+            --bg: #0d1117; --col-bg: #161b22; --card: #21262d; --border: #30363d; 
+            --text: #c9d1d9; --dim: #8b949e; --accent: #58a6ff; 
+            --urgent: #ff7b72; --warn: #d29922; --ok: #3fb950; 
+        }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        /* Navigation */
+        .nav { background: var(--col-bg); padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; align-items: center; }
+        .nav input { flex: 1; background: var(--bg); border: 1px solid var(--border); padding: 8px; border-radius: 6px; color: white; outline: none; }
+        .btn-add { background: #238636; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-util { background: transparent; color: var(--dim); border: 1px solid var(--border); padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; }
+
+        /* Board */
+        .board { display: flex; gap: 15px; padding: 20px; flex: 1; overflow-x: auto; align-items: flex-start; }
+        .column { min-width: 320px; width: 320px; background: var(--col-bg); border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; max-height: 90vh; }
+        .col-header { color: var(--dim); font-size: 11px; font-weight: bold; text-transform: uppercase; padding: 12px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); }
+        .list-area { min-height: 100px; flex-grow: 1; overflow-y: auto; padding-bottom: 20px; }
+
+        /* Cards */
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin: 10px; position: relative; }
+        .title { font-size: 14px; font-weight: bold; outline: none; color: white; margin-bottom: 10px; display: block; padding-right: 25px; }
+        .date-picker { background: #0d1117; color: white; border: 1px solid var(--border); font-size: 11px; border-radius: 4px; padding: 4px; width: 100%; box-sizing: border-box; margin-bottom: 8px; }
+        
+        .sla-label { font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-bottom: 10px; display: inline-block; }
+        .breached { background: rgba(255, 123, 114, 0.2); color: var(--urgent); }
+        .warning { background: rgba(210, 153, 34, 0.2); color: var(--warn); }
+        .on-track { background: rgba(63, 185, 80, 0.2); color: var(--ok); }
+
+        .prog-bg { height: 4px; background: #30363d; border-radius: 2px; margin: 8px 0; overflow: hidden; }
+        .prog-fill { height: 100%; background: var(--ok); transition: width 0.3s; }
+        
+        .sub-item { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-bottom: 4px; }
+        .sub-text { flex: 1; outline: none; color: var(--dim); }
+
+        /* Actions */
+        .actions { display: flex; gap: 4px; margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; }
+        .btn-m { font-size: 10px; background: #30363d; color: white; border: 1px solid var(--border); padding: 4px 6px; border-radius: 4px; cursor: pointer; flex: 1; text-align: center; }
+        .del { color: var(--urgent); position: absolute; top: 12px; right: 12px; cursor: pointer; background: none; border: none; font-weight: bold; }
+
+        /* About Overlay */
+        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 100; }
+        .modal { background: var(--col-bg); border: 1px solid var(--border); padding: 30px; border-radius: 12px; max-width: 400px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .modal h2 { margin-top: 0; color: var(--accent); }
+        .modal p { font-size: 14px; line-height: 1.6; color: var(--dim); margin-bottom: 25px; }
+        .social-btns { display: flex; gap: 10px; justify-content: center; }
+        .social-btn { padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px; }
+        .gh { background: #333; color: white; }
+        .li { background: #0077b5; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="nav">
+    <input type="text" id="taskIn" placeholder="Enter task name..." onkeydown="if(event.key==='Enter') addTask()">
+    <button class="btn-add" onclick="addTask()">+ Create</button>
+    <button class="btn-util" onclick="copyURL()">🔗 Copy Link</button>
+    <button class="btn-util" style="color:var(--urgent)" onclick="if(confirm('Wipe board?')) clearBoard()">🗑️ Reset</button>
+    <button class="btn-util" onclick="toggleAbout(true)">ℹ️ About</button>
+</div>
+
+<div class="board">
+    <div class="column"><div class="col-header">TODO <span id="cnt-todo">0</span></div><div id="list-todo" class="list-area"></div></div>
+    <div class="column"><div class="col-header">IN PROGRESS <span id="cnt-progress">0</span></div><div id="list-progress" class="list-area"></div></div>
+    <div class="column"><div class="col-header">DONE <span id="cnt-done">0</span></div><div id="list-done" class="list-area"></div></div>
+</div>
+
+<div id="overlay" onclick="toggleAbout(false)">
+    <div class="modal" onclick="event.stopPropagation()">
+        <h2>Simple Kanban</h2>
+        <p>This is a portable task manager. No databases, no logins. Every change updates the URL, so you can bookmark your list or share it with a link.</p>
+        <div class="social-btns">
+            <a href="https://github.com/MiguelCarino" target="_blank" class="social-btn gh">GitHub</a>
+            <a href="https://www.linkedin.com/in/miguelcarino94/" target="_blank" class="social-btn li">LinkedIn</a>
+        </div>
+        <button class="btn-util" style="margin-top:20px" onclick="toggleAbout(false)">Close</button>
+    </div>
+</div>
+
+<script>
+    let state = { todo: [], progress: [], done: [] };
+
+    const store = {
+        save: () => {
+            const str = btoa(encodeURIComponent(JSON.stringify(state)));
+            window.history.replaceState(null, null, "#" + str);
+            render();
+        },
+        load: () => {
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                try { 
+                    const raw = JSON.parse(decodeURIComponent(atob(hash)));
+                    state = {
+                        todo: Array.isArray(raw.todo) ? raw.todo.filter(t => t) : [],
+                        progress: Array.isArray(raw.progress) ? raw.progress.filter(t => t) : [],
+                        done: Array.isArray(raw.done) ? raw.done.filter(t => t) : []
+                    };
+                } catch(e) { console.error("URL Load Failed"); }
+            }
+            render();
+        }
+    };
+
+    function addTask() {
+        const input = document.getElementById('taskIn');
+        if (!input.value.trim()) return;
+        state.todo.push({ id: Date.now(), text: input.value, deadline: '', subs: [] });
+        input.value = '';
+        store.save();
+    }
+
+    function render() {
+        ['todo', 'progress', 'done'].forEach(k => {
+            const list = document.getElementById(`list-${k}`);
+            const count = document.getElementById(`cnt-${k}`);
+            if (!list || !count) return;
+
+            state[k] = state[k].filter(t => t && typeof t === 'object');
+            count.innerText = state[k].length;
+            list.innerHTML = '';
+
+            state[k].forEach(t => {
+                const subs = t.subs || [];
+                const done = subs.filter(s => s && s.done).length;
+                const prog = subs.length > 0 ? (done / subs.length) * 100 : 0;
+
+                let slaBadge = '';
+                if (t.deadline) {
+                    const diff = (new Date(t.deadline) - new Date()) / 1000;
+                    const h = Math.floor(Math.abs(diff) / 3600);
+                    const m = Math.floor((Math.abs(diff) % 3600) / 60);
+                    const cls = diff < 0 ? 'breached' : (diff < 7200 ? 'warning' : 'on-track');
+                    slaBadge = `<span class="sla-label ${cls}">${diff < 0 ? '-' : ''}${h}h ${m}m left</span>`;
+                }
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <button class="del" onclick="deleteTask(${t.id},'${k}')">✕</button>
+                    <span class="title" contenteditable="true" onblur="upd(${t.id},'${k}','text',this.innerText)">${t.text || ''}</span>
+                    <input type="datetime-local" class="date-picker" value="${t.deadline || ''}" onchange="upd(${t.id},'${k}','deadline',this.value)">
+                    ${slaBadge}
+                    ${subs.length > 0 ? `<div class="prog-bg"><div class="prog-fill" style="width:${prog}%"></div></div>` : ''}
+                    <div class="sub-box">
+                        ${subs.map((s, si) => s ? `
+                            <div class="sub-item">
+                                <input type="checkbox" ${s.done ? 'checked' : ''} onchange="tglSub(${t.id},'${k}',${si})">
+                                <div class="sub-text" contenteditable="true" onblur="updSub(${t.id},'${k}',${si},this.innerText)">${s.text || ''}</div>
+                            </div>` : '').join('')}
+                        <button class="btn-m" style="background:transparent; border:none; color:var(--accent); text-align:left; padding:0" onclick="addSub(${t.id},'${k}')">+ Step</button>
+                    </div>
+                    <div class="meta" style="font-size:10px; margin-top:8px; color:var(--dim)">Steps: ${done}/${subs.length}</div>
+                    <div class="actions">
+                        <button class="btn-m" onclick="mv(${t.id},'${k}','todo')">TODO</button>
+                        <button class="btn-m" onclick="mv(${t.id},'${k}','progress')">DO</button>
+                        <button class="btn-m" onclick="mv(${t.id},'${k}','done')">DONE</button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        });
+    }
+
+    // Logic Functions
+    function mv(id, f, to) {
+        if (f === to) return;
+        const i = state[f].findIndex(t => t && t.id === id);
+        if (i > -1) { state[to].push(state[f].splice(i, 1)[0]); store.save(); }
+    }
+    function upd(id, c, f, v) { const t = state[c].find(x => x.id === id); if(t) { t[f] = v; store.save(); } }
+    function addSub(id, c) { const t = state[c].find(x => x.id === id); if(t) { (t.subs = t.subs || []).push({text:'Step', done:false}); store.save(); } }
+    function tglSub(id, c, si) { const t = state[c].find(x => x.id === id); if(t && t.subs[si]) { t.subs[si].done = !t.subs[si].done; store.save(); } }
+    function updSub(id, c, si, v) { const t = state[c].find(x => x.id === id); if(t && t.subs[si]) { t.subs[si].text = v; store.save(); } }
+    function deleteTask(id, c) { state[c] = state[c].filter(t => t.id !== id); store.save(); }
+    function copyURL() { navigator.clipboard.writeText(window.location.href); alert("Link copied to clipboard!"); }
+    function clearBoard() { state = { todo: [], progress: [], done: [] }; store.save(); }
+    function toggleAbout(show) { document.getElementById('overlay').style.display = show ? 'flex' : 'none'; }
+
+    window.onload = store.load;
+</script>
+</body>
+</html>
