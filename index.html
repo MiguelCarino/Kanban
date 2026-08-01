@@ -173,18 +173,18 @@
 <header class="cs-header" data-carino-strip>
   <div class="cs-right" data-carino-actions>
     <input type="text" id="taskIn" class="cs-task-input" placeholder="Enter task name...">
-    <button class="cs-btn primary" id="btnCreate">+ Create</button>
+    <button class="cs-btn primary" id="btnCreate" data-i18n>+ Create</button>
     <div class="cs-vdiv"></div>
-    <button class="cs-btn" id="btnCopy">Copy Link</button>
-    <button class="cs-btn" id="btnReset">Reset</button>
-    <button class="cs-btn" id="btnAbout">About</button>
+    <button class="cs-btn" id="btnCopy" data-i18n>Copy Link</button>
+    <button class="cs-btn" id="btnReset" data-i18n>Reset</button>
+    <button class="cs-btn" id="btnAbout" data-i18n>About</button>
   </div>
 </header>
 
 <div class="board" id="board">
-    <div class="column"><div class="col-header">TODO <span class="col-count" id="cnt-todo">0</span></div><div id="list-todo" class="list-area" data-col="todo"></div></div>
-    <div class="column"><div class="col-header">IN PROGRESS <span class="col-count" id="cnt-progress">0</span></div><div id="list-progress" class="list-area" data-col="progress"></div></div>
-    <div class="column"><div class="col-header">DONE <span class="col-count" id="cnt-done">0</span></div><div id="list-done" class="list-area" data-col="done"></div></div>
+    <div class="column"><div class="col-header"><span data-i18n>TODO</span> <span class="col-count" id="cnt-todo">0</span></div><div id="list-todo" class="list-area" data-col="todo"></div></div>
+    <div class="column"><div class="col-header"><span data-i18n>IN PROGRESS</span> <span class="col-count" id="cnt-progress">0</span></div><div id="list-progress" class="list-area" data-col="progress"></div></div>
+    <div class="column"><div class="col-header"><span data-i18n>DONE</span> <span class="col-count" id="cnt-done">0</span></div><div id="list-done" class="list-area" data-col="done"></div></div>
 </div>
 
 <div class="modal-scrim" id="overlay" hidden>
@@ -194,13 +194,13 @@
             <button class="modal-x" id="btnAboutX" aria-label="Close">✕</button>
         </div>
         <div class="modal-body">
-            <p style="margin-top:0">A portable task manager. No databases, no logins. Every change is encoded into the URL, so a bookmark is your database and a link is your share. The latest board is also mirrored to this browser's local storage as a safety net.</p>
-            <p class="hint">Drag cards between columns · Enter to create · Titles and steps are click-to-edit</p>
+            <p style="margin-top:0" data-i18n>A portable task manager. No databases, no logins. Every change is encoded into the URL, so a bookmark is your database and a link is your share. The latest board is also mirrored to this browser's local storage as a safety net.</p>
+            <p class="hint" data-i18n>Drag cards between columns · Enter to create · Titles and steps are click-to-edit</p>
         </div>
         <div class="modal-foot">
             <a class="cs-btn" href="https://github.com/MiguelCarino" target="_blank" rel="noopener" style="text-decoration:none">GitHub</a>
             <a class="cs-btn" href="https://www.linkedin.com/in/miguelcarino94/" target="_blank" rel="noopener" style="text-decoration:none">LinkedIn</a>
-            <button class="cs-btn primary" id="btnAboutClose">Close</button>
+            <button class="cs-btn primary" id="btnAboutClose" data-i18n>Close</button>
         </div>
     </div>
 </div>
@@ -209,6 +209,10 @@
     let state = { todo: [], progress: [], done: [] };
     const COLS = ["todo", "progress", "done"];
     const LS_KEY = "kanban.board";
+
+    // i18n accessor — the dictionary script loads deferred (after this inline
+    // script runs), so fall back to the English literal until it is available.
+    const T = (k) => (window.CarinoI18N ? window.CarinoI18N.t(k) : k);
 
     // Everything rendered into innerHTML goes through this — board state can
     // arrive from any shared URL, so it is untrusted input.
@@ -279,7 +283,7 @@
         const m = Math.floor((abs % 3600) / 60);
         const span = d > 0 ? `${d}d ${h}h` : `${h}h ${m}m`;
         const cls = diff < 0 ? "breached" : (diff < 7200 ? "warning" : "on-track");
-        return `<span class="sla-label ${cls}">${diff < 0 ? "over by " : ""}${span}${diff < 0 ? "" : " left"}</span>`;
+        return `<span class="sla-label ${cls}">${diff < 0 ? esc(T("over by")) + " " : ""}${span}${diff < 0 ? "" : " " + esc(T("left"))}</span>`;
     }
 
     function render() {
@@ -287,7 +291,7 @@
             const list = document.getElementById(`list-${k}`);
             const count = document.getElementById(`cnt-${k}`);
             count.innerText = state[k].length;
-            list.innerHTML = state[k].length ? "" : '<div class="col-empty">No cards</div>';
+            list.innerHTML = state[k].length ? "" : `<div class="col-empty">${esc(T("No cards"))}</div>`;
 
             state[k].forEach((t) => {
                 const subs = t.subs;
@@ -300,7 +304,7 @@
                 card.dataset.id = t.id;
                 card.dataset.col = k;
                 card.innerHTML = `
-                    <button class="del" data-act="del" aria-label="Delete task">✕</button>
+                    <button class="del" data-act="del" aria-label="${esc(T("Delete task"))}">✕</button>
                     <span class="title" contenteditable="true" data-field="text" spellcheck="false">${esc(t.text)}</span>
                     <input type="datetime-local" class="date-picker" data-field="deadline" value="${esc(t.deadline)}">
                     ${t.deadline ? slaBadge(t.deadline) : ""}
@@ -311,13 +315,13 @@
                                 <input type="checkbox" ${s.done ? "checked" : ""} data-si="${si}">
                                 <div class="sub-text" contenteditable="true" data-si="${si}" spellcheck="false">${esc(s.text)}</div>
                             </div>`).join("")}
-                        <button class="add-step" data-act="addsub">+ Step</button>
+                        <button class="add-step" data-act="addsub">${esc(T("+ Step"))}</button>
                     </div>
-                    ${subs.length ? `<div class="meta">Steps: ${done}/${subs.length}</div>` : ""}
+                    ${subs.length ? `<div class="meta">${esc(T("Steps"))}: ${done}/${subs.length}</div>` : ""}
                     <div class="actions">
-                        <button class="btn-m${k === "todo" ? " here" : ""}" data-act="mv" data-to="todo">TODO</button>
-                        <button class="btn-m${k === "progress" ? " here" : ""}" data-act="mv" data-to="progress">DO</button>
-                        <button class="btn-m${k === "done" ? " here" : ""}" data-act="mv" data-to="done">DONE</button>
+                        <button class="btn-m${k === "todo" ? " here" : ""}" data-act="mv" data-to="todo">${esc(T("TODO"))}</button>
+                        <button class="btn-m${k === "progress" ? " here" : ""}" data-act="mv" data-to="progress">${esc(T("DO"))}</button>
+                        <button class="btn-m${k === "done" ? " here" : ""}" data-act="mv" data-to="done">${esc(T("DONE"))}</button>
                     </div>
                 `;
                 list.appendChild(card);
@@ -345,7 +349,7 @@
         const t = find(c.id, c.col);
         if (btn.dataset.act === "del") { state[c.col] = state[c.col].filter((x) => x.id !== c.id); store.save(); }
         else if (btn.dataset.act === "mv") mv(c.id, c.col, btn.dataset.to);
-        else if (btn.dataset.act === "addsub" && t) { t.subs.push({ text: "Step", done: false }); store.save(); }
+        else if (btn.dataset.act === "addsub" && t) { t.subs.push({ text: T("Step"), done: false }); store.save(); }
     });
 
     board.addEventListener("change", (e) => {
@@ -414,10 +418,10 @@
     const btnCopy = document.getElementById("btnCopy");
     btnCopy.addEventListener("click", () => {
         navigator.clipboard.writeText(window.location.href).then(() => {
-            btnCopy.textContent = "✓ Copied";
+            btnCopy.textContent = T("✓ Copied");
             btnCopy.classList.add("done");
-            setTimeout(() => { btnCopy.textContent = "Copy Link"; btnCopy.classList.remove("done"); }, 1500);
-        }).catch(() => { btnCopy.textContent = "Copy failed"; setTimeout(() => { btnCopy.textContent = "Copy Link"; }, 1500); });
+            setTimeout(() => { btnCopy.textContent = T("Copy Link"); btnCopy.classList.remove("done"); }, 1500);
+        }).catch(() => { btnCopy.textContent = T("Copy failed"); setTimeout(() => { btnCopy.textContent = T("Copy Link"); }, 1500); });
     });
 
     const btnReset = document.getElementById("btnReset");
@@ -425,16 +429,16 @@
     btnReset.addEventListener("click", () => {
         if (btnReset.classList.contains("armed")) {
             clearTimeout(resetTimer);
-            btnReset.textContent = "Reset";
+            btnReset.textContent = T("Reset");
             btnReset.classList.remove("armed");
             state = { todo: [], progress: [], done: [] };
             try { localStorage.removeItem(LS_KEY); } catch (e) {}
             window.history.replaceState(null, null, window.location.pathname);
             render();
         } else {
-            btnReset.textContent = "Sure? Click again";
+            btnReset.textContent = T("Sure? Click again");
             btnReset.classList.add("armed");
-            resetTimer = setTimeout(() => { btnReset.textContent = "Reset"; btnReset.classList.remove("armed"); }, 3000);
+            resetTimer = setTimeout(() => { btnReset.textContent = T("Reset"); btnReset.classList.remove("armed"); }, 3000);
         }
     });
 
@@ -452,5 +456,6 @@
 </script>
 <script src="carino-navbar.js" data-app="Kanban" defer></script>
 <script src="carino-lang.js" defer></script>
+<script src="i18n.js" defer></script>
 </body>
 </html>
