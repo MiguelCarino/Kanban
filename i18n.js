@@ -6,6 +6,10 @@
 
 const I18N = {
     es: {
+        'Late shift.': 'Turno nocturno.',
+        'Good morning.': 'Buenos días.',
+        'Good afternoon.': 'Buenas tardes.',
+        'Good evening.': 'Buenas noches.',
         // Toolbar
         'Enter task name...': 'Nombre de la tarea...',
         '+ Create': '+ Crear',
@@ -36,6 +40,10 @@ const I18N = {
         'Close': 'Cerrar',
     },
     'pt-BR': {
+        'Late shift.': 'Turno da noite.',
+        'Good morning.': 'Bom dia.',
+        'Good afternoon.': 'Boa tarde.',
+        'Good evening.': 'Boa noite.',
         'Enter task name...': 'Nome da tarefa...',
         '+ Create': '+ Criar',
         'Copy Link': 'Copiar link',
@@ -63,6 +71,10 @@ const I18N = {
         'Close': 'Fechar',
     },
     ja: {
+        'Late shift.': '夜勤お疲れさま。',
+        'Good morning.': 'おはようございます。',
+        'Good afternoon.': 'こんにちは。',
+        'Good evening.': 'こんばんは。',
         'Enter task name...': 'タスク名を入力...',
         '+ Create': '+ 作成',
         'Copy Link': 'リンクをコピー',
@@ -90,6 +102,10 @@ const I18N = {
         'Close': '閉じる',
     },
     ru: {
+        'Late shift.': 'Ночная смена.',
+        'Good morning.': 'Доброе утро.',
+        'Good afternoon.': 'Добрый день.',
+        'Good evening.': 'Добрый вечер.',
         'Enter task name...': 'Название задачи...',
         '+ Create': '+ Создать',
         'Copy Link': 'Копировать ссылку',
