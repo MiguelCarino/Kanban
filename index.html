@@ -28,63 +28,25 @@
     <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Kanban", "url": "https://kanban.carino.systems/", "description": "A free Kanban board with no account and no server: the whole board lives in its link, so you can bookmark it or share it.", "operatingSystem": "Any (runs in a web browser)", "isAccessibleForFree": true, "author": {"@type": "Person", "name": "Miguel Cariño", "url": "https://carino.systems/"}}</script>
     <!-- /carino:head -->
     <link rel="stylesheet" href="fonts/carino-fonts.css">
+    <link rel="stylesheet" href="carino-ui.css">
     <style>
-        :root {
-            --bg:           #050505;
-            --bg-elev:      #0d0d0d;
-            --bg-card:      #0b0b0b;
-            --accent:       #eab308;
-            --accent-faint: rgba(234,179,8,0.05);
-            --accent-glow:  rgba(234,179,8,0.15);
-            --accent-dim:   rgba(234,179,8,0.30);
-            --border:       #262626;
-            --text:         #ffffff;
-            --text-sec:     #a3a3a3;
-            --text-muted:   #8a8a8a;
-            --ok:           #22c55e;
-            --warn:         #eab308;
-            --err:          #ef4444;
-            --sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
-            --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-            --display: 'Red Hat Display', var(--sans);
-        }
-        * { box-sizing: border-box; }
-        body {
-            font-family: var(--sans); background: var(--bg); color: var(--text);
-            margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden;
-            color-scheme: dark;
-        }
+        body { color-scheme: dark; }
 
-        /* Toolbar controls (relocated into the Carino navbar by carino-navbar.js) */
-        .cs-btn {
-            display: flex; align-items: center; gap: 5px;
-            background: transparent; border: 1px solid var(--border); color: var(--text-sec);
-            font-family: var(--mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em;
-            padding: 0 10px; height: 32px; border-radius: 4px; cursor: pointer; transition: 0.2s; white-space: nowrap;
-        }
-        .cs-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-faint); }
-        .cs-btn.primary { background: var(--accent); border-color: var(--accent); color: #050505; font-weight: 700; }
-        .cs-btn.primary:hover { background: #fbbf24; color: #050505; box-shadow: 0 4px 16px var(--accent-glow); }
-        .cs-btn.armed { border-color: var(--err); color: var(--err); background: rgba(239,68,68,0.08); }
-        .cs-btn.done { border-color: var(--ok); color: var(--ok); background: rgba(34,197,94,0.08); }
-        .cs-vdiv { width: 1px; height: 22px; background: var(--border); flex-shrink: 0; }
-        .cs-task-input {
-            background: var(--bg-elev); border: 1px solid var(--border); color: var(--text);
-            font-family: var(--mono); font-size: 0.72rem;
-            padding: 0 10px; height: 32px; border-radius: 4px; outline: none; width: 180px; transition: 0.2s;
-        }
-        .cs-task-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-faint); }
-        .cs-task-input::placeholder { color: var(--text-muted); }
+        /* Navbar controls (relocated into the Carino navbar by carino-navbar.js) */
+        .kb-task.input { height: 32px; width: 180px; padding: 0 10px; }
 
-        /* Board */
-        .board { display: flex; gap: 16px; padding: 20px; flex: 1; overflow-x: auto; align-items: flex-start; }
+        /* Export menu: every output in one navbar dropdown (Branding #workspace). */
+
+        /* Board: three columns in the one-column shell */
+        .kb-main { padding-top: 20px; }
+        .board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
+        .board[hidden] { display: none; }
         .column {
-            min-width: 320px; width: 320px; flex-shrink: 0;
-            background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
-            display: flex; flex-direction: column; max-height: 100%;
+            min-width: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+            display: flex; flex-direction: column;
         }
         .col-header {
-            font-family: var(--mono); font-size: 0.68rem; font-weight: 700;
+            font-family: var(--mono); font-size: var(--fs-label); font-weight: 700;
             color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em;
             padding: 12px 14px; display: flex; justify-content: space-between; align-items: center;
             border-bottom: 1px solid var(--border);
@@ -93,35 +55,40 @@
             min-width: 22px; text-align: center; padding: 1px 6px; border-radius: 4px;
             border: 1px solid var(--border); background: var(--bg-elev); color: var(--text-sec);
         }
-        .list-area { min-height: 120px; flex: 1; overflow-y: auto; padding: 4px 0 16px; border-radius: 0 0 10px 10px; transition: background 0.15s, box-shadow 0.15s; }
+        .list-area { min-height: 120px; padding: 4px 0 16px; border-radius: 0 0 10px 10px; transition: background 0.15s, box-shadow 0.15s; }
         .list-area.drop-hint { background: var(--accent-faint); box-shadow: inset 0 0 0 1px var(--accent-dim); }
         .col-empty {
-            font-family: var(--mono); font-size: 0.66rem; color: var(--text-muted);
+            font-family: var(--mono); font-size: var(--fs-label); color: var(--text-muted);
             text-transform: uppercase; letter-spacing: 0.08em; text-align: center; padding: 24px 10px;
         }
 
-        /* Cards */
-        .card {
+        /* Empty board: the short hero takes the board's place */
+        .short-hero[hidden], .kb-foot[hidden] { display: none; }
+        .kb-add { display: flex; gap: 8px; width: 100%; max-width: 440px; margin: 0 auto; }
+        .kb-add .input { flex: 1; min-width: 0; }
+
+        /* Cards (.kcard: Branding's .card is a hover-lift link tile, not this) */
+        .kcard {
             background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px;
             padding: 12px; margin: 10px; position: relative; transition: border-color 0.2s, box-shadow 0.2s;
         }
-        .card:hover { border-color: var(--accent-dim); }
-        .card.dragging { opacity: 0.45; border-color: var(--accent); }
+        .kcard:hover { border-color: var(--accent-dim); }
+        .kcard.dragging { opacity: 0.45; border-color: var(--accent); }
         .title {
-            font-family: var(--display); font-size: 0.92rem; font-weight: 700; outline: none;
+            font-family: var(--display); font-size: var(--fs-sec); font-weight: 700; outline: none;
             color: var(--text); margin-bottom: 10px; display: block; padding-right: 26px; border-radius: 4px;
         }
         .title:focus { box-shadow: 0 0 0 3px var(--accent-faint); }
         .title:empty::before { content: "Untitled"; color: var(--text-muted); }
         .date-picker {
             background: var(--bg); color: var(--text-sec); border: 1px solid var(--border);
-            font-family: var(--mono); font-size: 0.68rem; border-radius: 4px; padding: 5px 6px;
-            width: 100%; margin-bottom: 8px; outline: none; transition: 0.2s;
+            font-family: var(--mono); font-size: var(--fs-label); border-radius: 4px; padding: 5px 6px;
+            width: 100%; margin-bottom: 8px; outline: none; transition: 0.2s; color-scheme: dark;
         }
         .date-picker:focus { border-color: var(--accent); }
 
         .sla-label {
-            font-family: var(--mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em;
+            font-family: var(--mono); font-size: var(--fs-micro); font-weight: 700; letter-spacing: 0.04em;
             padding: 2px 7px; border-radius: 4px; margin-bottom: 10px; display: inline-block; text-transform: uppercase;
         }
         .breached { background: rgba(239,68,68,0.12); color: var(--err); border: 1px solid rgba(239,68,68,0.35); }
@@ -132,23 +99,23 @@
         .prog-fill { height: 100%; background: var(--accent); transition: width 0.3s, background 0.3s; }
         .prog-fill.full { background: var(--ok); }
 
-        .sub-item { display: flex; align-items: center; gap: 7px; font-size: 0.78rem; margin-bottom: 4px; }
+        .sub-item { display: flex; align-items: center; gap: 7px; font-size: var(--fs-sm); margin-bottom: 4px; }
         .sub-item input[type="checkbox"] { accent-color: var(--accent); width: 14px; height: 14px; flex-shrink: 0; cursor: pointer; }
         .sub-text { flex: 1; outline: none; color: var(--text-sec); border-radius: 3px; }
         .sub-text:focus { box-shadow: 0 0 0 3px var(--accent-faint); }
         .sub-done .sub-text { color: var(--text-muted); text-decoration: line-through; }
         .add-step {
             background: transparent; border: none; color: var(--accent); font-family: var(--mono);
-            font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.06em;
+            font-size: var(--fs-label); text-transform: uppercase; letter-spacing: 0.06em;
             text-align: left; padding: 4px 0 0; cursor: pointer; opacity: 0.85;
         }
         .add-step:hover { opacity: 1; text-decoration: underline; }
-        .meta { font-family: var(--mono); font-size: 0.62rem; margin-top: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+        .meta { font-family: var(--mono); font-size: var(--fs-micro); margin-top: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
 
         /* Card actions */
         .actions { display: flex; gap: 5px; margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; }
         .btn-m {
-            font-family: var(--mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.05em;
+            font-family: var(--mono); font-size: var(--fs-micro); font-weight: 700; letter-spacing: 0.05em;
             background: transparent; color: var(--text-sec); border: 1px solid var(--border);
             padding: 5px 6px; border-radius: 4px; cursor: pointer; flex: 1; text-align: center; transition: 0.15s;
         }
@@ -156,37 +123,19 @@
         .btn-m.here { background: var(--accent); border-color: var(--accent); color: #050505; cursor: default; pointer-events: none; }
         .del {
             color: var(--text-muted); position: absolute; top: 10px; right: 10px; cursor: pointer;
-            background: none; border: none; font-size: 0.85rem; font-weight: bold; line-height: 1;
+            background: none; border: none; font-size: var(--fs-sm); font-weight: bold; line-height: 1;
             padding: 3px 5px; border-radius: 4px; transition: 0.15s;
         }
         .del:hover { color: var(--err); background: rgba(239,68,68,0.10); }
 
-        /* About modal (branding recipe) */
-        .modal-scrim {
-            position: fixed; inset: 0; z-index: 1000; padding: 24px;
-            display: flex; align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.65); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
-        }
-        .modal-scrim[hidden] { display: none; }
-        .modal {
-            display: flex; flex-direction: column; width: 100%; max-width: 460px;
-            max-height: min(90vh, 640px); overflow: hidden;
-            background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
-            box-shadow: 0 30px 80px rgba(0,0,0,0.75);
-        }
-        .modal-head { display: flex; align-items: center; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--border); }
-        .modal-title { font-family: var(--display); font-weight: 900; font-size: 1.05rem; text-transform: uppercase; letter-spacing: 0.5px; flex: 1; }
-        .modal-x { border: none; background: transparent; color: var(--text-muted); font-size: 1.1rem; line-height: 1; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: 0.15s; }
-        .modal-x:hover { color: var(--accent); background: var(--accent-faint); }
-        .modal-body { padding: 18px; color: var(--text-sec); font-size: 0.9rem; line-height: 1.6; overflow-y: auto; }
-        .modal-body .hint { font-family: var(--mono); font-size: 0.66rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 14px; }
-        .modal-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 18px; border-top: 1px solid var(--border); }
+        .modal-body .hint { font-family: var(--mono); font-size: var(--fs-label); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 14px; }
+        .btn-danger { border-color: rgba(239,68,68,0.5); color: var(--err); }
+        .btn-danger:hover { border-color: var(--err); color: var(--err); background: rgba(239,68,68,0.08); }
+        .kb-foot { padding-top: 4px; }
 
-        @media (max-width: 700px) {
-            body { overflow: auto; height: auto; min-height: 100vh; }
-            .board { flex-direction: column; overflow-x: visible; }
-            .column { width: 100%; min-width: 0; max-height: none; }
-            .cs-task-input { width: 130px; }
+        @media (max-width: 640px) {
+            .board { grid-template-columns: 1fr; }
+            .kb-task.input { width: 120px; }
         }
     </style>
 </head>
@@ -194,20 +143,45 @@
 
 <header class="cs-header" data-carino-strip>
   <div class="cs-right" data-carino-actions>
-    <input type="text" id="taskIn" class="cs-task-input" placeholder="Enter task name...">
-    <button class="cs-btn primary" id="btnCreate" data-i18n>+ Create</button>
-    <div class="cs-vdiv"></div>
-    <button class="cs-btn" id="btnCopy" data-i18n>Copy Link</button>
-    <button class="cs-btn" id="btnReset" data-i18n>Reset</button>
-    <button class="cs-btn" id="btnAbout" data-i18n>About</button>
+    <input type="text" id="taskIn" class="input kb-task" placeholder="Enter task name..." aria-label="Task name">
+    <button class="cs-btn primary" id="btnCreate" data-priority="1" data-i18n>+ Create</button>
+    <div class="cs-menu">
+      <button type="button" class="cs-btn cs-menu-btn" id="exportMenuBtn" aria-haspopup="true" aria-expanded="false"><span data-i18n>Export</span> <span class="cs-caret">▾</span></button>
+      <div class="cs-menu-panel" id="exportMenu" role="menu" aria-labelledby="exportMenuBtn" hidden>
+        <button type="button" class="cs-menu-item" id="btnCopy" role="menuitem"><span data-i18n>Copy link</span> <span class="cs-menu-note" data-i18n>holds the board</span></button>
+        <div class="cs-menu-div"></div>
+        <button type="button" class="cs-menu-item danger" id="btnReset" role="menuitem" data-i18n>Reset the board…</button>
+      </div>
+    </div>
+    <button class="cs-btn" id="btnAbout" title="Help" aria-label="Help">?</button>
   </div>
 </header>
 
-<div class="board" role="main" id="board">
-    <div class="column"><div class="col-header"><span data-i18n>TODO</span> <span class="col-count" id="cnt-todo">0</span></div><div id="list-todo" class="list-area" data-col="todo"></div></div>
-    <div class="column"><div class="col-header"><span data-i18n>IN PROGRESS</span> <span class="col-count" id="cnt-progress">0</span></div><div id="list-progress" class="list-area" data-col="progress"></div></div>
-    <div class="column"><div class="col-header"><span data-i18n>DONE</span> <span class="col-count" id="cnt-done">0</span></div><div id="list-done" class="list-area" data-col="done"></div></div>
-</div>
+<main class="col kb-main" id="main">
+    <div class="short-hero" id="emptyHero" hidden>
+        <img class="mark" src="logo.svg" alt="" width="48" height="48">
+        <h1><span data-i18n>Plan the work.</span><br><span class="gold" data-i18n>Keep the board in its link.</span></h1>
+        <p class="sh-lede" data-i18n>Add a card and move it from To do to Done. Bookmark the page or send the link, and the whole board goes with it.</p>
+        <div class="sh-input">
+            <form class="kb-add" id="heroAdd">
+                <input type="text" id="heroTaskIn" class="input" placeholder="Enter task name..." aria-label="Task name">
+                <button type="submit" class="btn btn-primary" data-i18n>Add card</button>
+            </form>
+        </div>
+        <div class="examples"><span class="ex-label" data-i18n>Try:</span><button type="button" class="chip-tag" id="btnExample" data-i18n>Open the example board</button></div>
+        <p class="privacy-line"><span><span data-i18n>Runs in your browser. Nothing you add here is uploaded.</span> <span data-i18n>The board lives in its link and in this browser.</span></span></p>
+    </div>
+
+    <div class="board" id="board">
+        <div class="column"><div class="col-header"><span data-i18n>TODO</span> <span class="col-count" id="cnt-todo">0</span></div><div id="list-todo" class="list-area" data-col="todo"></div></div>
+        <div class="column"><div class="col-header"><span data-i18n>IN PROGRESS</span> <span class="col-count" id="cnt-progress">0</span></div><div id="list-progress" class="list-area" data-col="progress"></div></div>
+        <div class="column"><div class="col-header"><span data-i18n>DONE</span> <span class="col-count" id="cnt-done">0</span></div><div id="list-done" class="list-area" data-col="done"></div></div>
+    </div>
+
+    <div class="kb-foot" id="boardFoot">
+        <p class="privacy-line"><span><span data-i18n>Runs in your browser. Nothing you add here is uploaded.</span> <span data-i18n>The board lives in its link and in this browser.</span></span></p>
+    </div>
+</main>
 
 <div class="modal-scrim" id="overlay" hidden>
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
@@ -220,12 +194,28 @@
             <p class="hint" data-i18n>Drag cards between columns · Enter to create · Titles and steps are click-to-edit</p>
         </div>
         <div class="modal-foot">
-            <a class="cs-btn" href="https://github.com/MiguelCarino" target="_blank" rel="noopener" style="text-decoration:none">GitHub</a>
-            <a class="cs-btn" href="https://www.linkedin.com/in/miguelcarino94/" target="_blank" rel="noopener" style="text-decoration:none">LinkedIn</a>
-            <button class="cs-btn primary" id="btnAboutClose" data-i18n>Close</button>
+            <button class="btn btn-primary" id="btnAboutClose" data-i18n>Close</button>
         </div>
     </div>
 </div>
+
+<div class="modal-scrim" id="resetOverlay" hidden>
+    <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="resetTitle" aria-describedby="resetWhat">
+        <div class="modal-head">
+            <div class="modal-title" id="resetTitle" data-i18n>Reset the board</div>
+            <button class="modal-x" id="btnResetX" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body">
+            <p style="margin:0" id="resetWhat" data-i18n>This removes every card from this board and from this browser. A link you copied earlier still opens the old board.</p>
+        </div>
+        <div class="modal-foot">
+            <button class="btn btn-ghost" id="btnResetCancel" data-i18n>Cancel</button>
+            <button class="btn btn-danger" id="btnResetRun" data-i18n>Reset the board</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
     let state = { todo: [], progress: [], done: [] };
@@ -288,12 +278,47 @@
         }
     };
 
-    function addTask() {
-        const input = document.getElementById("taskIn");
-        if (!input.value.trim()) return;
+    function addTask(input) {
+        input = input || document.getElementById("taskIn");
+        if (!input.value.trim()) {
+            // The navbar field folds into the ⋯ menu on phones; with nothing
+            // typed, Create sends you to whichever field is on screen.
+            const hero = document.getElementById("heroTaskIn");
+            (hero.offsetParent ? hero : input).focus();
+            return;
+        }
         state.todo.push({ id: String(Date.now()), text: input.value.trim(), deadline: "", subs: [] });
         input.value = "";
         store.save();
+    }
+
+    // A sample board, labelled as one, so a first visit shows what the tool does.
+    function loadExample() {
+        const id = (n) => String(Date.now() + n);
+        const ex = T("Example");
+        state = {
+            todo: [
+                { id: id(1), text: ex + ": " + T("Write the project brief"), deadline: "", subs: [
+                    { text: T("List the goals"), done: true }, { text: T("Agree the budget"), done: false }] },
+                { id: id(2), text: ex + ": " + T("Book the kickoff meeting"), deadline: "", subs: [] }
+            ],
+            progress: [
+                { id: id(3), text: ex + ": " + T("Draft the first design"), deadline: "", subs: [
+                    { text: T("Sketch"), done: true }, { text: T("Review"), done: false }, { text: T("Revise"), done: false }] }
+            ],
+            done: [
+                { id: id(4), text: ex + ": " + T("Set up the board"), deadline: "", subs: [] }
+            ]
+        };
+        store.save();
+    }
+
+    const toastEl = document.getElementById("toast");
+    function toast(msg, kind) {
+        toastEl.textContent = msg;
+        toastEl.className = "toast show " + (kind || "ok");
+        clearTimeout(toastEl._to);
+        toastEl._to = setTimeout(() => { toastEl.className = "toast"; }, 1800);
     }
 
     function slaBadge(deadline) {
@@ -309,6 +334,11 @@
     }
 
     function render() {
+        // An empty board shows the short hero instead of three empty columns.
+        const empty = !COLS.some((k) => state[k].length);
+        document.getElementById("emptyHero").hidden = !empty;
+        document.getElementById("board").hidden = empty;
+        document.getElementById("boardFoot").hidden = empty;
         COLS.forEach((k) => {
             const list = document.getElementById(`list-${k}`);
             const count = document.getElementById(`cnt-${k}`);
@@ -321,7 +351,7 @@
                 const prog = subs.length ? (done / subs.length) * 100 : 0;
 
                 const card = document.createElement("div");
-                card.className = "card";
+                card.className = "kcard";
                 card.draggable = true;
                 card.dataset.id = t.id;
                 card.dataset.col = k;
@@ -361,7 +391,7 @@
 
     // Event delegation — one set of listeners, no inline handlers
     const board = document.getElementById("board");
-    const ctx = (el) => { const card = el.closest(".card"); return card ? { id: card.dataset.id, col: card.dataset.col } : null; };
+    const ctx = (el) => { const card = el.closest(".kcard"); return card ? { id: card.dataset.id, col: card.dataset.col } : null; };
 
     board.addEventListener("click", (e) => {
         const btn = e.target.closest("[data-act]");
@@ -403,7 +433,7 @@
     // Drag & drop between columns (desktop; move buttons remain for touch)
     let drag = null;
     board.addEventListener("dragstart", (e) => {
-        const card = e.target.closest(".card");
+        const card = e.target.closest(".kcard");
         if (!card) return;
         drag = { id: card.dataset.id, col: card.dataset.col };
         card.classList.add("dragging");
@@ -412,7 +442,7 @@
     });
     board.addEventListener("dragend", () => {
         drag = null;
-        document.querySelectorAll(".card.dragging").forEach((c) => c.classList.remove("dragging"));
+        document.querySelectorAll(".kcard.dragging").forEach((c) => c.classList.remove("dragging"));
         document.querySelectorAll(".list-area.drop-hint").forEach((l) => l.classList.remove("drop-hint"));
     });
     board.addEventListener("dragover", (e) => {
@@ -433,50 +463,48 @@
         mv(drag.id, drag.col, list.dataset.col);
     });
 
-    // Toolbar (non-blocking feedback instead of alert/confirm)
-    document.getElementById("btnCreate").addEventListener("click", addTask);
+    // Toolbar
+    document.getElementById("btnCreate").addEventListener("click", () => addTask());
     document.getElementById("taskIn").addEventListener("keydown", (e) => { if (e.key === "Enter") addTask(); });
+    document.getElementById("heroAdd").addEventListener("submit", (e) => { e.preventDefault(); addTask(document.getElementById("heroTaskIn")); });
+    document.getElementById("btnExample").addEventListener("click", loadExample);
 
-    const btnCopy = document.getElementById("btnCopy");
-    btnCopy.addEventListener("click", () => {
-        navigator.clipboard.writeText(window.location.href).then(() => {
-            btnCopy.textContent = T("✓ Copied");
-            btnCopy.classList.add("done");
-            setTimeout(() => { btnCopy.textContent = T("Copy Link"); btnCopy.classList.remove("done"); }, 1500);
-        }).catch(() => { btnCopy.textContent = T("Copy failed"); setTimeout(() => { btnCopy.textContent = T("Copy Link"); }, 1500); });
+
+    document.getElementById("btnCopy").addEventListener("click", () => {
+        navigator.clipboard.writeText(window.location.href)
+            .then(() => toast(T("✓ Link copied — it holds the whole board")))
+            .catch(() => toast(T("Copy failed"), "err"));
     });
 
-    const btnReset = document.getElementById("btnReset");
-    let resetTimer = null;
-    btnReset.addEventListener("click", () => {
-        if (btnReset.classList.contains("armed")) {
-            clearTimeout(resetTimer);
-            btnReset.textContent = T("Reset");
-            btnReset.classList.remove("armed");
-            state = { todo: [], progress: [], done: [] };
-            try { localStorage.removeItem(LS_KEY); } catch (e) {}
-            window.history.replaceState(null, null, window.location.pathname);
-            render();
-        } else {
-            btnReset.textContent = T("Sure? Click again");
-            btnReset.classList.add("armed");
-            resetTimer = setTimeout(() => { btnReset.textContent = T("Reset"); btnReset.classList.remove("armed"); }, 3000);
-        }
-    });
-
-    // About modal
+    // Modals: the About help and the Reset confirmation
     const overlay = document.getElementById("overlay");
+    const resetOverlay = document.getElementById("resetOverlay");
     const showAbout = (show) => { overlay.hidden = !show; };
+    const showReset = (show) => { resetOverlay.hidden = !show; if (show) document.getElementById("btnResetCancel").focus(); };
     document.getElementById("btnAbout").addEventListener("click", () => showAbout(true));
     document.getElementById("btnAboutX").addEventListener("click", () => showAbout(false));
     document.getElementById("btnAboutClose").addEventListener("click", () => showAbout(false));
     overlay.addEventListener("click", (e) => { if (e.target === overlay) showAbout(false); });
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") showAbout(false); });
+    document.getElementById("btnReset").addEventListener("click", () => showReset(true));
+    document.getElementById("btnResetX").addEventListener("click", () => showReset(false));
+    document.getElementById("btnResetCancel").addEventListener("click", () => showReset(false));
+    resetOverlay.addEventListener("click", (e) => { if (e.target === resetOverlay) showReset(false); });
+    document.getElementById("btnResetRun").addEventListener("click", () => {
+        state = { todo: [], progress: [], done: [] };
+        try { localStorage.removeItem(LS_KEY); } catch (e) {}
+        window.history.replaceState(null, null, window.location.pathname);
+        render();
+        showReset(false);
+        toast(T("Board reset"));
+    });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") { showAbout(false); showReset(false); } });
 
     window.addEventListener("hashchange", store.load);
     store.load();
 </script>
 <script src="carino-navbar.js" data-app="Kanban" data-repo="Kanban" defer></script>
+<!-- The Export menu (and any drawer) are wired by the shared UI script. -->
+<script src="carino-ui.js" defer></script>
 <script src="carino-lang.js" defer></script>
 <script src="i18n.js" defer></script>
 </body>
