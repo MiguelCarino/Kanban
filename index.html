@@ -176,6 +176,11 @@
         :root[data-carino-theme="color"] .on-track { background: var(--ct-ok-bg); color: var(--ct-ok-fg); border-color: var(--ct-ok-line); }
         :root[data-carino-theme="color"] .del:hover, :root[data-carino-theme="color"] .btn-danger:hover { background: var(--ct-err-bg); }
         :root[data-carino-theme="color"] .btn-danger { border-color: var(--ct-err-line); }
+        /* column identity: a 3px top edge only; Done is teal, not green, so it is not a success state */
+        :root[data-carino-theme="color"] .board .column { box-shadow: inset 0 3px 0 var(--kb-c, transparent); }
+        :root[data-carino-theme="color"] .board .column:nth-child(1) { --kb-c: var(--ct-purple); }
+        :root[data-carino-theme="color"] .board .column:nth-child(2) { --kb-c: var(--ct-amber); }
+        :root[data-carino-theme="color"] .board .column:nth-child(3) { --kb-c: var(--ct-teal); }
     </style>
 </head>
 <body>
