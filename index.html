@@ -27,6 +27,24 @@
     <script type="application/json" id="carino-head-i18n">{"es": {"title": "Tablero Kanban gratis, sin cuenta, guardado en el enlace", "desc": "Un tablero Kanban gratis, sin cuenta ni servidor: todo el tablero vive en su enlace, para que lo guardes en favoritos o lo compartas."}, "pt-BR": {"title": "Quadro Kanban grátis, sem conta, salvo no link", "desc": "Um quadro Kanban grátis, sem conta e sem servidor: o quadro inteiro fica no link, para você salvar nos favoritos ou compartilhar."}, "ja": {"title": "Kanbanボード 無料・登録不要・リンクに保存", "desc": "アカウントもサーバーも不要の無料Kanbanボード。ボード全体がリンクに収まるので、ブックマークや共有が簡単。"}, "ru": {"title": "Kanban-доска бесплатно, без регистрации, хранится в ссылке", "desc": "Бесплатная Kanban-доска без аккаунта и сервера: вся доска хранится в ссылке, её можно добавить в закладки или отправить другим."}}</script>
     <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Kanban", "url": "https://kanban.carino.systems/", "description": "A free Kanban board with no account and no server: the whole board lives in its link, so you can bookmark it or share it.", "operatingSystem": "Any (runs in a web browser)", "isAccessibleForFree": true, "author": {"@type": "Person", "name": "Miguel Cariño", "url": "https://carino.systems/"}}</script>
     <!-- /carino:head -->
+    <!-- Theme before first paint, so neither theme flashes the other:
+         ?theme=gold|color (review links; not stored) > carino-theme cookie
+         (shared across *.carino.systems) > localStorage > Gold & Black. -->
+    <meta name="theme-color" content="#050505" id="carinoThemeColor">
+    <script>
+    (function () {
+      var d = document.documentElement, t = null;
+      function pick(v) { return v === 'gold' ? 'gold' : (v === 'color' || v === 'colour') ? 'color' : null; }
+      try { t = pick(new URLSearchParams(location.search).get('theme')); } catch (e) {}
+      if (!t) { try { var m = document.cookie.match(/(?:^|;\s*)carino-theme=([^;]*)/); if (m) t = pick(decodeURIComponent(m[1])); } catch (e) {} }
+      if (!t) { try { t = pick(localStorage.getItem('carino-theme')); } catch (e) {} }
+      t = t || 'gold';
+      d.setAttribute('data-carino-theme', t);
+      var dark = d.getAttribute('data-theme') !== 'light' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
+      var meta = document.getElementById('carinoThemeColor');
+      if (meta) meta.content = t === 'gold' ? '#050505' : (dark ? '#0e1420' : '#eef3fc');
+    })();
+    </script>
     <link rel="stylesheet" href="fonts/carino-fonts.css">
     <link rel="stylesheet" href="carino-ui.css">
     <style>
@@ -138,6 +156,26 @@
             .kb-task.input { width: 120px; }
         }
     </style>
+    <!-- Colourful theme + the switch; nothing applies until data-carino-theme="color". -->
+    <link rel="stylesheet" href="carino-theme.css">
+    <style>
+        /* the hero mark in both colourings; the theme picks one */
+        .short-hero .mark.mk-color, :root[data-carino-theme="color"] .short-hero .mark.mk-gold { display: none; }
+        :root[data-carino-theme="color"] .short-hero .mark.mk-color { display: block; }
+        /* Colourful: carino-theme.css remaps the tokens, so everything that reads
+           one follows; these are the values above written for black. */
+        :root[data-carino-theme="color"] body { background-image: var(--stage-grad); background-attachment: fixed; }
+        /* body and the date field pin color-scheme to dark; let the theme's own win */
+        :root[data-carino-theme="color"] body,
+        :root[data-carino-theme="color"] .date-picker { color-scheme: inherit; }
+        :root[data-carino-theme="color"] .btn-m.here { color: var(--ct-on-accent); }
+        :root[data-carino-theme="color"] .kcard { background: var(--bg-card); box-shadow: var(--ct-shadow-1); }
+        :root[data-carino-theme="color"] .kcard:hover { box-shadow: var(--ct-shadow-2); }
+        :root[data-carino-theme="color"] .breached { background: var(--ct-err-bg); color: var(--ct-err-fg); border-color: var(--ct-err-line); }
+        :root[data-carino-theme="color"] .on-track { background: var(--ct-ok-bg); color: var(--ct-ok-fg); border-color: var(--ct-ok-line); }
+        :root[data-carino-theme="color"] .del:hover, :root[data-carino-theme="color"] .btn-danger:hover { background: var(--ct-err-bg); }
+        :root[data-carino-theme="color"] .btn-danger { border-color: var(--ct-err-line); }
+    </style>
 </head>
 <body>
 
@@ -159,7 +197,8 @@
 
 <main class="col kb-main" id="main">
     <div class="short-hero" id="emptyHero" hidden>
-        <img class="mark" src="logo.svg" alt="" width="48" height="48">
+        <img class="mark mk-gold" src="logo.svg" alt="" width="48" height="48">
+        <img class="mark mk-color" src="logo-color.svg" alt="" width="48" height="48">
         <h1><span data-i18n>Plan the work.</span><br><span class="gold" data-i18n>Keep the board in its link.</span></h1>
         <p class="sh-lede" data-i18n>Add a card and move it from To do to Done. Bookmark the page or send the link, and the whole board goes with it.</p>
         <div class="sh-input">
@@ -503,6 +542,7 @@
     store.load();
 </script>
 <script src="carino-navbar.js" data-app="Kanban" data-repo="Kanban" defer></script>
+<script src="carino-theme.js" data-mark="logo.svg" data-mark-color="logo-color.svg" defer></script>
 <!-- The Export menu (and any drawer) are wired by the shared UI script. -->
 <script src="carino-ui.js" defer></script>
 <script src="carino-lang.js" defer></script>
