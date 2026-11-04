@@ -184,6 +184,22 @@
     </style>
 </head>
 <body>
+<!-- Key words: the navbar shows them, translated, under its Language tab. -->
+<ul data-carino-words hidden>
+  <li>TODO</li>
+  <li>IN PROGRESS</li>
+  <li>DONE</li>
+  <li>Add card</li>
+  <li>Copy link</li>
+  <li>Reset the board</li>
+</ul>
+
+
+<!-- What this page must say: the navbar shows it in its About window. -->
+<div data-carino-about hidden>
+  <p><span><span data-i18n>Runs in your browser. Nothing you add here is uploaded.</span> <span data-i18n>The board lives in its link and in this browser.</span></span></p>
+</div>
+
 
 <header class="cs-header" data-carino-strip>
   <div class="cs-right" data-carino-actions>
@@ -214,7 +230,6 @@
             </form>
         </div>
         <div class="examples"><span class="ex-label" data-i18n>Try:</span><button type="button" class="chip-tag" id="btnExample" data-i18n>Open the example board</button></div>
-        <p class="privacy-line"><span><span data-i18n>Runs in your browser. Nothing you add here is uploaded.</span> <span data-i18n>The board lives in its link and in this browser.</span></span></p>
     </div>
 
     <div class="board" id="board">
@@ -223,9 +238,6 @@
         <div class="column"><div class="col-header"><span data-i18n>DONE</span> <span class="col-count" id="cnt-done">0</span></div><div id="list-done" class="list-area" data-col="done"></div></div>
     </div>
 
-    <div class="kb-foot" id="boardFoot">
-        <p class="privacy-line"><span><span data-i18n>Runs in your browser. Nothing you add here is uploaded.</span> <span data-i18n>The board lives in its link and in this browser.</span></span></p>
-    </div>
 </main>
 
 <div class="modal-scrim" id="overlay" hidden>
@@ -383,7 +395,6 @@
         const empty = !COLS.some((k) => state[k].length);
         document.getElementById("emptyHero").hidden = !empty;
         document.getElementById("board").hidden = empty;
-        document.getElementById("boardFoot").hidden = empty;
         COLS.forEach((k) => {
             const list = document.getElementById(`list-${k}`);
             const count = document.getElementById(`cnt-${k}`);
